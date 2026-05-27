@@ -13,12 +13,12 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    const [existingUser] = await db.query(
-      "SELECT * FROM users WHERE email = ?",
+    const existingUser = await db.query(
+      "SELECT * FROM users WHERE email = $1",
       [email]
     );
 
-    if (existingUser.length > 0) {
+    if (existingUser.rows.length > 0) {
       return res.status(409).json({
         success: false,
         message: "Email is already registered.",
@@ -28,7 +28,7 @@ export const registerUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await db.query(
-      "INSERT INTO users (full_name, email, password, role) VALUES (?, ?, ?, ?)",
+      "INSERT INTO users (full_name, email, password, role) VALUES ($1, $2, $3, $4)",
       [fullName, email, hashedPassword, role]
     );
 
@@ -56,19 +56,19 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    const [users] = await db.query(
-      "SELECT * FROM users WHERE email = ? AND role = ?",
+    const users = await db.query(
+      "SELECT * FROM users WHERE email = $1 AND role = $2",
       [email, role]
     );
 
-    if (users.length === 0) {
+    if (users.rows.length === 0) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password.",
       });
     }
 
-    const user = users[0];
+    const user = users.rows[0];
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {

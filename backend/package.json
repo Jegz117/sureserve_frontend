@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "sureserve-backend",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -20,7 +20,7 @@
     "dotenv": "^17.4.2",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.14.3"
+    "pg": "^8.12.0"
   },
 
   "devDependencies": {
