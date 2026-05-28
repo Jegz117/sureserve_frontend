@@ -16,7 +16,10 @@ app.use(
   cors({
     origin: [
       "https://sureserve-frontend-mauve.vercel.app",
+      "https://sureserve-frontend-git-main-jego-agbayani-s-projects.vercel.app",
     ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
