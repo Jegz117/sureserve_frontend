@@ -548,8 +548,6 @@ export default function AppAuth({ onLogin, portalType = "buyer" }) {
                   </button>
                 </p>
               )}
-
-              )}
             </form>
           </div>
         )}
