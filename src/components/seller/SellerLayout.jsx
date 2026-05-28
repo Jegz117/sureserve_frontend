@@ -1123,6 +1123,15 @@ function Analytics() {
     );
   }
 
+function Analytics() {
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    getSellerStats().then(res => {
+      if (res.success) setStats(res.data);
+    }).catch(() => {});
+  }, []);
+
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
   const requestData = [12, 18, 14, 22, 19, 25];
   const ticketData = [8, 12, 10, 16, 14, 18];
