@@ -346,16 +346,24 @@ function HeaderTitle({ icon: Icon, title, subtitle, action }) {
 
 function SellerDashboard() {
   const [stats, setStats] = useState(null);
-  const [recentRequests, setRecentRequests] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
 
   useEffect(() => {
     getSellerStats().then((res) => {
       if (res.success) setStats(res.data);
     }).catch(() => {});
 
-    getServiceRequests().then((res) => {
-      if (res.success) setRecentRequests(res.data.slice(0, 4));
-    }).catch(() => {});
+    Promise.all([
+      getServiceRequests().catch(() => ({ success: false, data: [] })),
+      getTickets().catch(() => ({ success: false, data: [] }))
+    ]).then(([reqRes, tickRes]) => {
+      let combined = [];
+      if (reqRes.success) combined = combined.concat(reqRes.data.map(r => ({ ...r, type: 'request' })));
+      if (tickRes.success) combined = combined.concat(tickRes.data.map(t => ({ ...t, type: 'ticket' })));
+      
+      combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      setRecentActivity(combined.slice(0, 5));
+    });
   }, []);
 
   return (
@@ -390,36 +398,35 @@ function SellerDashboard() {
       <div className="mt-7 grid grid-cols-[1fr_390px] gap-6">
         <div className="rounded-2xl bg-white shadow-sm ring-1 ring-orange-100">
           <div className="flex items-center justify-between border-b border-orange-100 p-6">
-            <h3 className="text-lg font-extrabold">Recent Requests</h3>
-            <button type="button" onClick={() => go("/seller-requests")} className="font-semibold text-orange-500">
-              View all →
-            </button>
+            <h3 className="text-lg font-extrabold">Recent Activity</h3>
           </div>
 
-          {recentRequests.length === 0 ? (
-            <div className="p-8 text-center text-slate-400">No requests yet.</div>
+          {recentActivity.length === 0 ? (
+            <div className="p-8 text-center text-slate-400">No activity yet.</div>
           ) : (
-            recentRequests.map((req) => (
+            recentActivity.map((item) => (
               <button
                 type="button"
-                onClick={() => go(`/seller-requests#${req.id}`)}
-                key={req.id}
+                onClick={() => go(item.type === 'ticket' ? `/seller-tickets#${item.id}` : `/seller-requests#${item.id}`)}
+                key={`${item.type}-${item.id}`}
                 className="flex w-full cursor-pointer items-center gap-4 border-b border-slate-100 px-6 py-4 text-left transition-colors hover:bg-orange-50/50"
               >
-                <span className="flex-shrink-0 rounded-xl bg-orange-50 px-3 py-2 text-xs font-bold text-orange-500">
-                  #{req.id}
+                <span className={`flex-shrink-0 rounded-xl px-3 py-2 text-xs font-bold ${
+                  item.type === 'ticket' ? 'bg-blue-50 text-blue-500' : 'bg-orange-50 text-orange-500'
+                }`}>
+                  #{item.id}
                 </span>
 
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-bold">{req.customer_name || "Customer"}</p>
-                  <p className="truncate text-xs text-slate-400">{req.service_type}</p>
+                  <p className="truncate font-bold">{item.customer_name || "Customer"}</p>
+                  <p className="truncate text-xs text-slate-400">{item.type === 'ticket' ? item.ticket_type : item.service_type}</p>
                 </div>
 
-                <Badge>{req.status}</Badge>
-                <Badge>{req.priority}</Badge>
+                <Badge>{item.status}</Badge>
+                <Badge>{item.priority}</Badge>
 
                 <span className="flex-shrink-0 text-xs text-slate-400">
-                  {new Date(req.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  {new Date(item.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                 </span>
               </button>
             ))
@@ -428,15 +435,15 @@ function SellerDashboard() {
 
         <div className="space-y-5">
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-orange-100">
-            <h3 className="mb-5 text-lg font-extrabold">Request Status</h3>
+            <h3 className="mb-5 text-lg font-extrabold">Activity Status</h3>
 
             {[
-              ["Completed", stats?.finishedRequests || 0, "bg-emerald-500"],
-              ["In Progress", stats?.processingRequests || 0, "bg-orange-500"],
-              ["Pending", stats?.pendingRequests || 0, "bg-blue-500"],
-              ["Cancelled", stats?.cancelledRequests || 0, "bg-red-500"],
+              ["Completed", (stats?.finishedRequests || 0) + (stats?.finishedTickets || 0), "bg-emerald-500"],
+              ["In Progress", (stats?.processingRequests || 0) + (stats?.processingTickets || 0), "bg-orange-500"],
+              ["Pending", (stats?.pendingRequests || 0) + (stats?.pendingTickets || 0), "bg-blue-500"],
+              ["Cancelled", (stats?.cancelledRequests || 0) + (stats?.totalTickets ? stats.totalTickets - stats.finishedTickets - stats.processingTickets - stats.pendingTickets : 0), "bg-red-500"],
             ].map(([label, value, color]) => {
-              const total = Math.max(stats?.totalRequests || 1, 1);
+              const total = Math.max((stats?.totalRequests || 0) + (stats?.totalTickets || 0), 1);
               const pct = Math.round((value / total) * 100);
               return (
                 <div className="mb-3" key={label}>
@@ -489,7 +496,7 @@ function SellerDashboard() {
             <div>
               <h3 className="text-lg font-extrabold">Performance Insight</h3>
               <p className="font-semibold text-orange-300">
-                Your completion rate is {stats && stats.totalRequests > 0 ? Math.round((stats.finishedRequests / stats.totalRequests) * 100) : 0}% — keep it up!
+                Your completion rate is {stats && (stats.totalRequests + stats.totalTickets) > 0 ? Math.round(((stats.finishedRequests + stats.finishedTickets) / (stats.totalRequests + stats.totalTickets)) * 100) : 0}% — keep it up!
               </p>
             </div>
           </div>
@@ -1150,9 +1157,9 @@ function Analytics() {
       <div className="grid grid-cols-4 gap-5" id="analytics-content">
         {[
           [Clock, "1.8h", "Avg Response Time", "-0.3h vs last month"],
-          [CheckCircle2, stats ? `${stats.totalRequests > 0 ? Math.round((stats.finishedRequests / stats.totalRequests) * 100) : 0}%` : "0%", "Completion Rate", "All time"],
-          [Star, "4.8/5", "Customer Rating", "+0.1 vs last month"],
-          [Users, stats ? String(stats.totalRequests) : "0", "Total Requests", "All time"],
+          [CheckCircle2, stats ? `${(stats.totalRequests + stats.totalTickets) > 0 ? Math.round(((stats.finishedRequests + stats.finishedTickets) / (stats.totalRequests + stats.totalTickets)) * 100) : 0}%` : "0%", "Completion Rate", "All time"],
+          [Star, stats && parseFloat(stats.avgRating) > 0 ? `${stats.avgRating}/5` : "0.0/5", "Customer Rating", stats ? `Based on ${stats.totalRatings} ratings` : "No ratings"],
+          [Users, stats ? String(stats.totalRequests + stats.totalTickets) : "0", "Total Activity", "Requests + Tickets"],
         ].map(([Icon, value, title, note]) => (
           <div key={title} className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-orange-100">
             <Icon className="text-blue-500" />
@@ -1276,10 +1283,10 @@ function Analytics() {
               <div className="h-28 w-28 rounded-full border-[18px] border-emerald-500 border-b-blue-500 border-r-orange-400" />
 
               <div className="space-y-2 text-sm">
-                <p className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-emerald-500" /> Finished {stats ? stats.finishedRequests : 0}</p>
-                <p className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-orange-400" /> Processing {stats ? stats.processingRequests : 0}</p>
-                <p className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-blue-500" /> Pending {stats ? stats.pendingRequests : 0}</p>
-                <p className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-red-400" /> Cancelled {stats ? stats.cancelledRequests : 0}</p>
+                <p className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-emerald-500" /> Finished {stats ? stats.finishedRequests + stats.finishedTickets : 0}</p>
+                <p className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-orange-400" /> Processing {stats ? stats.processingRequests + stats.processingTickets : 0}</p>
+                <p className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-blue-500" /> Pending {stats ? stats.pendingRequests + stats.pendingTickets : 0}</p>
+                <p className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-red-400" /> Cancelled {stats ? stats.cancelledRequests + (stats.totalTickets - stats.finishedTickets - stats.processingTickets - stats.pendingTickets) : 0}</p>
               </div>
             </div>
           </div>
