@@ -827,7 +827,8 @@ function TablePage({ type }) {
     const body = encodeURIComponent(`Hello ${row.customer_name || "Customer"},\n\nRegarding your ${typeLabel.toLowerCase()} #${row.id} (${itemType}):\n\n`);
 
     if (email) {
-      window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`;
+      window.open(gmailUrl, "_blank", "noopener,noreferrer");
     } else {
       setToast(`No customer email available for this ${isTicketItem ? "ticket" : "request"}.`);
       setTimeout(() => setToast(""), 2200);
@@ -953,7 +954,9 @@ function TablePage({ type }) {
 
                   <td className="px-5 py-5">
                     <p className="font-bold">{row.customer_name || "Customer"}</p>
-                    <p className="text-xs text-slate-400">{row.customer_email || ""}</p>
+                    <p className="max-w-[180px] truncate text-xs text-slate-400" title={row.customer_email || ""}>
+                      {row.customer_email || ""}
+                    </p>
                     {row.phone && <p className="text-xs text-slate-400">{row.phone}</p>}
                   </td>
 
