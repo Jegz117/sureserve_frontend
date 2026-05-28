@@ -73,11 +73,13 @@ export default function ProfilePage({ isDarkMode, setIsDarkMode, user, onUpdateU
     try {
       // Don't send the large base64 photo string to the backend to avoid payload too large errors
       const { photo, ...profileData } = profile;
+      // Never send email — it's read-only
+      delete profileData.email;
       const res = await updateProfile(profileData);
       
-      // Save photo to local storage (frontend only)
+      // Save photo to local storage (frontend only) using user-specific key
+      const photoKey = `profilePhoto_${user?.id || 'default'}`;
       if (profile.photo) {
-        const photoKey = `profilePhoto_${user?.id || 'default'}`;
         localStorage.setItem(photoKey, profile.photo);
       }
       
@@ -86,9 +88,9 @@ export default function ProfilePage({ isDarkMode, setIsDarkMode, user, onUpdateU
         setSaveMessage("Profile updated successfully!");
 
         // Also update localStorage user data
-        updateUserLocal({ fullName: profile.fullName, email: profile.email });
+        updateUserLocal({ fullName: profile.fullName });
         if (onUpdateUser) {
-           onUpdateUser({ ...user, fullName: profile.fullName, email: profile.email });
+           onUpdateUser({ ...user, fullName: profile.fullName, photo: profile.photo });
         }
       } else {
         setSaveMessage(res.message || "Update failed.");
@@ -233,10 +235,11 @@ export default function ProfilePage({ isDarkMode, setIsDarkMode, user, onUpdateU
             icon={Mail}
             label="Email Address"
             value={profile.email}
-            disabled={!isEditing}
+            disabled={true}
             inputClass={inputClass}
             labelClass={labelClass}
-            onChange={(value) => setProfile({ ...profile, email: value })}
+            onChange={() => {}}
+            hint="Email address cannot be changed"
           />
 
           <ProfileField
@@ -302,12 +305,14 @@ function ProfileField({
   inputClass,
   labelClass,
   onChange,
+  hint,
 }) {
   return (
     <div>
       <div className="mb-3 flex items-center gap-3">
         <Icon className="h-5 w-5 text-blue-600" />
         <label className={`font-bold ${labelClass}`}>{label}</label>
+        {hint && <span className="ml-auto text-xs text-slate-400">{hint}</span>}
       </div>
 
       <input

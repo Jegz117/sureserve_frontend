@@ -1,308 +1,123 @@
 ================================================================================
-              SURESERVE - FULL SETUP GUIDE (Flask + MySQL + React)
+              SURESERVE - FULL DEPLOYMENT & ARCHITECTURE GUIDE
 ================================================================================
 
-This guide covers everything you need to install and run the SureServe
-Electronics Service Provider website on your local machine (Windows).
-
-
-================================================================================
-  STEP 1: INSTALL PREREQUISITES
-================================================================================
-
-You need THREE things installed:
-
-  1. Python 3.10 or higher
-  2. MySQL 8.0 or higher
-  3. Node.js 18 or higher
-
-Download links:
-
-  Python:  https://www.python.org/downloads/
-           → During install, CHECK "Add Python to PATH"
-
-  MySQL:   https://dev.mysql.com/downloads/installer/
-           → Choose "MySQL Server" (Community Edition)
-           → During install, set root password to: SureServe@2026
-             (or change it in backend_flask/.env later)
-
-  Node.js: https://nodejs.org/
-           → Download the LTS version
-
+This guide explains the architecture of the live, deployed SureServe Electronics 
+Service Provider platform. It is fully cloud-hosted and no longer requires a 
+local database or local Python/Node environment to run.
 
 ================================================================================
-  STEP 2: SET UP THE DATABASE
+  1. ARCHITECTURE OVERVIEW
 ================================================================================
 
-Option A — Using MySQL Command Line:
+The platform is split into three cloud-hosted layers:
 
-  1. Open Command Prompt or PowerShell
-  2. Run:
+  1. FRONTEND: React (Vite)
+     - Hosted on: Vercel
+     - The frontend is automatically deployed whenever code is pushed to the 
+       `main` branch of the GitHub repository.
 
-     mysql -u root -p
+  2. BACKEND: Node.js (Express)
+     - Hosted on: Render (or similar Node.js cloud provider)
+     - The backend provides the REST APIs for authentication, profiles, 
+       service requests, tickets, and ratings.
+     - Note: We previously used a Flask (Python) backend, but it was fully 
+       migrated to a Node.js (Express) backend for better Javascript ecosystem 
+       compatibility. The old `backend_flask` directory may still exist as an 
+       archive, but the active backend is in the `backend/` folder.
 
-  3. Enter your MySQL root password (SureServe@2026)
-  4. In the MySQL shell, run:
-
-     source C:/Users/Administrator/Documents/SURE SERVE CURRENT FILE/sureserve_frontend/backend_flask/init.sql
-
-  5. Type: exit
-
-Option B — Using MySQL Workbench:
-
-  1. Open MySQL Workbench
-  2. Connect to your local MySQL server
-  3. Open File → Open SQL Script
-  4. Navigate to: sureserve_frontend/backend_flask/init.sql
-  5. Click the lightning bolt (⚡) to execute
-  6. Verify database "sureserve_db" was created in the left panel
-
+  3. DATABASE: PostgreSQL
+     - Hosted on: Managed PostgreSQL Provider (e.g., Supabase / Aiven / Render DB)
+     - We migrated from MySQL to PostgreSQL to better support modern cloud 
+       hosting platforms.
 
 ================================================================================
-  STEP 3: CREATE THE SELLER/ADMIN ACCOUNT
+  2. DEPLOYED URLs (LIVE LINKS)
 ================================================================================
 
-Since the seed password in init.sql is a placeholder, you need to create
-a real provider account. After the backend is running (Step 4), you can:
+  - BUYER / CUSTOMER PORTAL: 
+    [Your Vercel Domain] (e.g., https://sureserve-frontend.vercel.app/)
 
-Option A — Use the Python script below:
+  - SELLER / PROVIDER PORTAL:
+    [Your Vercel Domain]/seller-login 
 
-  1. Open Command Prompt in the backend_flask folder
-  2. Run:
-
-     python -c "import bcrypt; print(bcrypt.hashpw(b'admin123', bcrypt.gensalt()).decode())"
-
-  3. Copy the output hash
-  4. In MySQL, run:
-
-     USE sureserve_db;
-     UPDATE users SET password = '<paste_hash_here>' WHERE email = 'seller@techking.com';
-
-  Or simpler — just register via the API after starting the backend:
-
-     curl -X POST http://localhost:5000/api/auth/register ^
-       -H "Content-Type: application/json" ^
-       -d "{\"fullName\": \"TechKing Store\", \"email\": \"seller@techking.com\", \"password\": \"admin123\", \"role\": \"provider\"}"
-
+  - API BASE URL:
+    https://sureserve-backend.onrender.com
 
 ================================================================================
-  STEP 4: INSTALL & RUN THE FLASK BACKEND
+  3. CREDENTIALS FOR TESTING
 ================================================================================
 
-  1. Open Command Prompt or PowerShell
+To access the Seller/Provider dashboard with all the analytics and management 
+tools, use the admin account that was seeded into the production database:
 
-  2. Navigate to the backend folder:
+  - Email: seller@techking.com
+  - Password: admin123
 
-     cd "C:\Users\Administrator\Documents\SURE SERVE CURRENT FILE\sureserve_frontend\backend_flask"
-
-  3. (RECOMMENDED) Create a virtual environment:
-
-     python -m venv venv
-     venv\Scripts\activate
-
-  4. Install Python dependencies:
-
-     pip install -r requirements.txt
-
-  5. Initialize the database (if not done in Step 2):
-
-     python init_db.py
-
-  6. Start the Flask server:
-
-     python app.py
-
-  7. You should see:
-
-     * Running on http://0.0.0.0:5000
-
-  8. Test it by opening in your browser:
-
-     http://localhost:5000/
-
-     → Should show: {"message": "SureServe Flask backend is running"}
-
-     http://localhost:5000/api/test-db
-
-     → Should show: {"message": "MySQL Connected Successfully", "success": true}
-
+For the Buyer Portal, you can either create a new account by clicking "Create 
+Account" on the login page, or use an existing test account if you made one.
 
 ================================================================================
-  STEP 5: INSTALL & RUN THE REACT FRONTEND
+  4. ENVIRONMENT VARIABLES (.env)
 ================================================================================
 
-  1. Open a NEW Command Prompt or PowerShell window (keep backend running)
+Because the app is deployed, you do not need to configure local `.env` files 
+unless you want to run it locally for development.
 
-  2. Navigate to the frontend folder:
+The LIVE Environment Variables are configured directly in Vercel and Render:
 
-     cd "C:\Users\Administrator\Documents\SURE SERVE CURRENT FILE\sureserve_frontend"
+  Vercel (Frontend) Variables:
+    VITE_API_URL = https://sureserve-backend.onrender.com
 
-  3. Install Node.js dependencies:
+  Render (Backend) Variables:
+    PORT = 5000
+    DATABASE_URL = postgres://[username]:[password]@[host]:[port]/[database]
+    JWT_SECRET = sureserve_secret_key
 
+================================================================================
+  5. LOCAL DEVELOPMENT (OPTIONAL)
+================================================================================
+
+If you want to run the project locally to make edits without affecting the live 
+site, follow these steps:
+
+  1. Clone the repository
+  2. Open Terminal 1 (Backend):
+     cd backend
      npm install
+     npm start
 
-  4. Start the development server:
-
+  3. Open Terminal 2 (Frontend):
+     npm install
      npm run dev
 
-  5. You should see:
-
-     VITE v5.x.x  ready in Xms
-     ➜  Local:   http://localhost:5173/
-
-  6. Open your browser to:
-
-     http://localhost:5173/
-
+  (You will need to create a `backend/.env` file with the DATABASE_URL pointing 
+  to your cloud database or a local PostgreSQL instance).
 
 ================================================================================
-  STEP 6: TEST THE APPLICATION
-================================================================================
-
-  BUYER FLOW:
-
-    1. On the login page, click "Create Account"
-    2. Fill in your name, email, and password
-    3. After success, sign in with those credentials
-    4. You'll see the Buyer Dashboard with real data
-    5. Try "Installation Request" → Submit a service request
-    6. Try "Submit Support Ticket" → Submit a ticket
-    7. Go to "Recent Tickets" → See your submitted tickets
-    8. Go to "Profile" → Update your name/email/phone/address
-    9. Toggle dark mode from the Profile page
-
-  SELLER/ADMIN FLOW:
-
-    1. First, create a provider account (see Step 3 above)
-    2. Go to: http://localhost:5173/seller-login
-    3. Log in with: seller@techking.com / admin123
-    4. You'll see the Seller Dashboard with stats from the database
-    5. "Manage Requests" shows service requests from all buyers
-    6. "Manage Tickets" shows support tickets from all buyers
-    7. Use the ⋮ menu to mark items Finished or Cancelled
-    8. "Analytics" shows performance metrics
-    9. Export data as CSV from the table pages
-
-  PREMIUM PAGE:
-
-    The Premium page shows pricing plans (Free/Professional/Enterprise).
-    This is currently a static marketing page — payment integration
-    (e.g., Stripe/PayMongo) can be added as a future feature.
-
-
-================================================================================
-  CONFIGURATION (.env FILE)
-================================================================================
-
-  The backend configuration is in: backend_flask/.env
-
-    PORT=5000              ← Flask server port
-    DB_HOST=127.0.0.1      ← MySQL host
-    DB_USER=root           ← MySQL username
-    DB_PASSWORD=SureServe@2026  ← MySQL password
-    DB_NAME=sureserve_db   ← Database name
-    JWT_SECRET=sureserve_secret_key  ← JWT signing secret
-
-  Change these values if your MySQL credentials are different.
-
-
-================================================================================
-  PROJECT STRUCTURE
+  6. PROJECT STRUCTURE
 ================================================================================
 
   sureserve_frontend/
-  ├── backend_flask/           ← Python Flask backend (NEW)
-  │   ├── app.py               ← Main Flask app entry point
-  │   ├── config.py            ← Environment config loader
-  │   ├── db.py                ← MySQL connection pool
-  │   ├── auth_middleware.py   ← JWT auth decorators
-  │   ├── init_db.py           ← Database initializer script
-  │   ├── init.sql             ← Full database schema
-  │   ├── requirements.txt     ← Python dependencies
-  │   ├── .env                 ← Config (DB, JWT secret)
-  │   └── routes/
-  │       ├── auth_routes.py
-  │       ├── service_routes.py
-  │       ├── booking_routes.py
-  │       ├── ticket_routes.py
-  │       ├── service_request_routes.py
-  │       └── profile_routes.py
+  ├── backend/                 ← ACTIVE Node.js Express API
+  │   ├── server.js            ← Main entry point
+  │   ├── db.js                ← PostgreSQL connection pool
+  │   ├── init.sql             ← Full database schema (run on initDB)
+  │   ├── controllers/         ← Business logic for all routes
+  │   ├── middleware/          ← JWT authentication middleware
+  │   └── routes/              ← API route definitions
   │
-  ├── src/                     ← React frontend
-  │   ├── App.jsx
-  │   ├── AppAuth.jsx
-  │   ├── main.jsx
-  │   ├── index.css
+  ├── backend_flask/           ← ARCHIVED Python backend (Do not use)
+  │
+  ├── src/                     ← React Frontend
+  │   ├── AppAuth.jsx          ← Main app router (Buyer vs Seller paths)
   │   ├── components/
-  │   │   ├── buyer/
-  │   │   │   ├── BuyerHeader.jsx
-  │   │   │   ├── BuyerLayout.jsx
-  │   │   │   └── BuyerSidebar.jsx
-  │   │   └── seller/
-  │   │       └── SellerLayout.jsx
-  │   ├── pages/buyer/
-  │   │   ├── BuyerDashboard.jsx
-  │   │   ├── DashboardContent.jsx
-  │   │   ├── InstallationPage.jsx
-  │   │   ├── TicketPage.jsx
-  │   │   ├── RecentPage.jsx
-  │   │   ├── PremiumPage.jsx
-  │   │   └── ProfilePage.jsx
-  │   ├── services/
-  │   │   ├── authService.js
-  │   │   ├── ticketService.js
-  │   │   ├── serviceRequestService.js
-  │   │   └── profileService.js
-  │   └── utils/
-  │       └── sellerAuth.js
+  │   │   ├── buyer/           ← Buyer sidebar, header, layout
+  │   │   └── seller/          ← Seller dashboard, layout, analytics
+  │   ├── pages/buyer/         ← All buyer pages (Dashboard, Profile, etc.)
+  │   └── services/            ← Axios/Fetch API calls to backend
   │
-  ├── index.html
-  ├── package.json
-  └── vite.config.js
-
-
-================================================================================
-  TROUBLESHOOTING
-================================================================================
-
-  ❌ "mysql is not recognized as a command"
-     → Add MySQL bin folder to your PATH:
-       C:\Program Files\MySQL\MySQL Server 8.0\bin
-
-  ❌ "pip is not recognized"
-     → Reinstall Python and CHECK "Add Python to PATH"
-
-  ❌ "Access denied for user 'root'"
-     → Check DB_PASSWORD in backend_flask/.env matches your MySQL root password
-
-  ❌ "Cannot connect to backend server" in the browser
-     → Make sure Flask is running (python app.py) on port 5000
-
-  ❌ "CORS error" in browser console
-     → Flask-CORS is already configured. Restart Flask if needed.
-
-  ❌ Frontend shows blank page
-     → Open browser DevTools (F12) → Console tab for errors
-     → Make sure npm install completed without errors
-
-
-================================================================================
-  QUICK START (SUMMARY)
-================================================================================
-
-  Terminal 1 (Backend):
-    cd sureserve_frontend\backend_flask
-    python -m venv venv
-    venv\Scripts\activate
-    pip install -r requirements.txt
-    python init_db.py
-    python app.py
-
-  Terminal 2 (Frontend):
-    cd sureserve_frontend
-    npm install
-    npm run dev
-
-  Open: http://localhost:5173/
+  ├── package.json             ← Frontend dependencies
+  └── vite.config.js           ← Vite configuration
 
 ================================================================================

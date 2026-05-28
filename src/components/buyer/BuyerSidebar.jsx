@@ -28,7 +28,7 @@ export default function BuyerSidebar({ currentPage, setPage, onLogout, user }) {
   const name = user?.fullName || "User";
   const email = user?.email || "";
   const subscription = user?.subscription || "Free";
-  const photo = localStorage.getItem("profilePhoto"); // User's custom photo
+  const photo = user?.photo || localStorage.getItem(`profilePhoto_${user?.id || 'default'}`) || "";
   const initials = name
     .split(" ")
     .map((w) => w[0])

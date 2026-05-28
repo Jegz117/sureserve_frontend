@@ -59,6 +59,65 @@ export default function InstallationPage({ setPage, user }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState({});
+  const [locationSuggestions, setLocationSuggestions] = useState([]);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+
+  // Common location suggestions (Philippines)
+  const commonLocations = [
+    "Quezon City, Metro Manila",
+    "Manila City, Metro Manila",
+    "Makati City, Metro Manila",
+    "Taguig City, Metro Manila",
+    "Pasig City, Metro Manila",
+    "Mandaluyong City, Metro Manila",
+    "Pasay City, Metro Manila",
+    "Parañaque City, Metro Manila",
+    "Las Piñas City, Metro Manila",
+    "Muntinlupa City, Metro Manila",
+    "Marikina City, Metro Manila",
+    "San Juan City, Metro Manila",
+    "Caloocan City, Metro Manila",
+    "Malabon City, Metro Manila",
+    "Navotas City, Metro Manila",
+    "Valenzuela City, Metro Manila",
+    "Cebu City, Cebu",
+    "Davao City, Davao del Sur",
+    "Zamboanga City, Zamboanga del Sur",
+    "Baguio City, Benguet",
+    "Iloilo City, Iloilo",
+    "Cagayan de Oro City, Misamis Oriental",
+    "General Santos City, South Cotabato",
+    "Bacolod City, Negros Occidental",
+    "Angeles City, Pampanga",
+    "San Fernando City, La Union",
+    "Antipolo City, Rizal",
+    "Bacoor City, Cavite",
+    "Imus City, Cavite",
+    "Dasmariñas City, Cavite",
+    "San Pedro City, Laguna",
+    "Santa Rosa City, Laguna",
+    "Biñan City, Laguna",
+    "Cainta, Rizal",
+    "Taytay, Rizal",
+  ];
+
+  const handleLocationChange = (value) => {
+    setForm({ ...form, location: value });
+    if (value.length >= 2) {
+      const filtered = commonLocations.filter((loc) =>
+        loc.toLowerCase().includes(value.toLowerCase())
+      );
+      setLocationSuggestions(filtered.slice(0, 5));
+      setShowLocationDropdown(filtered.length > 0);
+    } else {
+      setShowLocationDropdown(false);
+    }
+  };
+
+  const selectLocation = (loc) => {
+    setForm({ ...form, location: loc });
+    setShowLocationDropdown(false);
+  };
 
   const validate = () => {
     const errs = {};
@@ -196,12 +255,43 @@ export default function InstallationPage({ setPage, user }) {
           </div>
 
           <FieldWrap label="Service Location" required icon={MapPin}>
-            <input
-              className={`${fieldClass} pl-11`}
-              placeholder="Enter the address where service is needed"
-              value={form.location}
-              onChange={(e) => setForm({ ...form, location: e.target.value })}
-            />
+            <div className="relative">
+              <input
+                className={`${fieldClass} pl-11`}
+                placeholder="Enter the address where service is needed"
+                value={form.location}
+                onChange={(e) => handleLocationChange(e.target.value)}
+                onFocus={() => {
+                  if (form.location.length >= 2) {
+                    const filtered = commonLocations.filter((loc) =>
+                      loc.toLowerCase().includes(form.location.toLowerCase())
+                    );
+                    if (filtered.length > 0) {
+                      setLocationSuggestions(filtered.slice(0, 5));
+                      setShowLocationDropdown(true);
+                    }
+                  }
+                }}
+                onBlur={() => setTimeout(() => setShowLocationDropdown(false), 200)}
+              />
+              {showLocationDropdown && locationSuggestions.length > 0 && (
+                <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-48 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg">
+                  {locationSuggestions.map((loc) => (
+                    <li key={loc}>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => selectLocation(loc)}
+                        className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm transition hover:bg-blue-50"
+                      >
+                        <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-blue-500" />
+                        <span>{loc}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </FieldWrap>
 
           <div className="grid gap-5 md:grid-cols-2">

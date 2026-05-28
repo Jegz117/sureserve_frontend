@@ -12,7 +12,6 @@ import {
   Filter,
   Download,
   Star,
-  DollarSign,
   Users,
   Clock,
   CheckCircle2,
@@ -749,25 +748,41 @@ function TablePage({ type }) {
   const [highlightId, setHighlightId] = useState(null);
 
   useEffect(() => {
-    setLoading(true);
-    const fetcher = isTicket ? getTickets : getServiceRequests;
-    fetcher()
-      .then((res) => {
-        if (res.success) setRows(res.data);
-      })
-      .catch(() => {})
-      .finally(() => {
-        setLoading(false);
-        const hash = window.location.hash.replace("#", "");
-        if (hash) {
-          setHighlightId(parseInt(hash));
-          setTimeout(() => {
-            const el = document.getElementById(`row-${hash}`);
-            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-          }, 100);
-          setTimeout(() => setHighlightId(null), 3000);
-        }
-      });
+    const fetchData = () => {
+      setLoading(true);
+      const fetcher = isTicket ? getTickets : getServiceRequests;
+      fetcher()
+        .then((res) => {
+          if (res.success) setRows(res.data);
+        })
+        .catch(() => {})
+        .finally(() => {
+          setLoading(false);
+          const hash = window.location.hash.replace("#", "");
+          if (hash) {
+            setHighlightId(parseInt(hash));
+            setTimeout(() => {
+              const el = document.getElementById(`row-${hash}`);
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+            }, 100);
+            setTimeout(() => setHighlightId(null), 3000);
+          }
+        });
+    };
+
+    fetchData();
+
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      const fetcher = isTicket ? getTickets : getServiceRequests;
+      fetcher()
+        .then((res) => {
+          if (res.success) setRows(res.data);
+        })
+        .catch(() => {});
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [isTicket]);
 
   const filteredRows = useMemo(() => {
