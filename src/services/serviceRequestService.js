@@ -1,6 +1,6 @@
 import { authHeaders } from "./authService";
 
-const API_URL = "http://localhost:5000/api/service-requests";
+const API_URL = `${import.meta.env.VITE_API_URL}/api/service-requests`;
 
 export const createServiceRequest = async (data) => {
   const res = await fetch(API_URL, {

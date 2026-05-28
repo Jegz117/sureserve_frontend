@@ -1,6 +1,6 @@
 import { authHeaders } from "./authService";
 
-const API_URL = "http://localhost:5000/api/tickets";
+const API_URL = `${import.meta.env.VITE_API_URL}/api/tickets`;
 
 export const createTicket = async (data) => {
   const res = await fetch(API_URL, {
