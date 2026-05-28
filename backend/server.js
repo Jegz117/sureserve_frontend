@@ -6,6 +6,9 @@ import db from "./db.js";
 import authRoutes from "./routes/authRoutes.js";
 import serviceRoutes from "./routes/serviceRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
+import profileRoutes from "./routes/profileRoutes.js";
+import ticketRoutes from "./routes/ticketRoutes.js";
+import serviceRequestRoutes from "./routes/serviceRequestRoutes.js";
 
 dotenv.config();
 
@@ -30,6 +33,9 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/profile", profileRoutes);
+app.use("/api/tickets", ticketRoutes);
+app.use("/api/service-requests", serviceRequestRoutes);
 
 // Root route
 app.get("/", (req, res) => {

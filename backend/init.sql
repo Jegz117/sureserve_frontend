@@ -1,17 +1,18 @@
-CREATE DATABASE IF NOT EXISTS sureserve_db;
-USE sureserve_db;
+-- PostgreSQL schema for SureServe
 
 CREATE TABLE IF NOT EXISTS users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
   full_name VARCHAR(100) NOT NULL,
   email VARCHAR(100) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
-  role ENUM('buyer', 'provider', 'admin') DEFAULT 'buyer',
+  phone VARCHAR(30) DEFAULT '',
+  address TEXT DEFAULT NULL,
+  role VARCHAR(20) DEFAULT 'buyer',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS services (
-  id INT AUTO_INCREMENT PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
   provider_id INT NOT NULL,
   title VARCHAR(255) NOT NULL,
   description TEXT,
@@ -23,10 +24,10 @@ CREATE TABLE IF NOT EXISTS services (
 );
 
 CREATE TABLE IF NOT EXISTS bookings (
-  id INT AUTO_INCREMENT PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
   buyer_id INT NOT NULL,
   service_id INT NOT NULL,
-  status ENUM('pending', 'confirmed', 'completed', 'cancelled') DEFAULT 'pending',
+  status VARCHAR(20) DEFAULT 'pending',
   booking_date DATE NOT NULL,
   booking_time TIME NOT NULL,
   notes TEXT,
@@ -34,3 +35,44 @@ CREATE TABLE IF NOT EXISTS bookings (
   FOREIGN KEY (buyer_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS tickets (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL,
+  ticket_type VARCHAR(100) NOT NULL,
+  priority VARCHAR(20) DEFAULT 'Normal',
+  contact_person VARCHAR(100) DEFAULT '',
+  phone VARCHAR(30) DEFAULT '',
+  description TEXT,
+  status VARCHAR(20) DEFAULT 'Pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS service_requests (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL,
+  service_type VARCHAR(100) NOT NULL,
+  priority VARCHAR(20) DEFAULT 'Normal',
+  location TEXT NOT NULL,
+  contact_person VARCHAR(100) DEFAULT '',
+  phone VARCHAR(30) DEFAULT '',
+  preferred_date DATE DEFAULT NULL,
+  preferred_time VARCHAR(30) DEFAULT '',
+  description TEXT,
+  status VARCHAR(20) DEFAULT 'Pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Add phone and address columns to users if they don't exist
+-- (safe to run multiple times — PostgreSQL will raise a notice but not error with IF NOT EXISTS in newer versions)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'phone') THEN
+    ALTER TABLE users ADD COLUMN phone VARCHAR(30) DEFAULT '';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'address') THEN
+    ALTER TABLE users ADD COLUMN address TEXT DEFAULT NULL;
+  END IF;
+END $$;
