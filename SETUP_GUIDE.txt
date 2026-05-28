@@ -75,7 +75,22 @@ The LIVE Environment Variables are configured directly in Vercel and Render:
     JWT_SECRET = sureserve_secret_key
 
 ================================================================================
-  5. LOCAL DEVELOPMENT (OPTIONAL)
+  5. MANUAL PASSWORD HASHING (IF NEEDED)
+================================================================================
+
+If you ever need to manually insert a user directly into the PostgreSQL database,
+you cannot use plain text passwords. You must hash them using `bcrypt`.
+
+To generate a hash quickly via your terminal (using Node.js), run:
+
+  node -e "require('bcryptjs').hash('admin123', 10).then(console.log)"
+
+You can then copy the output hash and use it in your SQL `INSERT` statement.
+Alternatively, just use the `/api/auth/register` API endpoint, which handles 
+hashing automatically!
+
+================================================================================
+  6. LOCAL DEVELOPMENT (OPTIONAL)
 ================================================================================
 
 If you want to run the project locally to make edits without affecting the live 
