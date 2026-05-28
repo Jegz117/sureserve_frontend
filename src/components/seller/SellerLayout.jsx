@@ -86,18 +86,18 @@ function ConfirmModal({ open, title, message, confirmLabel, confirmColor, onConf
 
 function Badge({ children }) {
   const map = {
-    Processing: "bg-orange-50 text-orange-500",
-    Finished: "bg-emerald-50 text-emerald-600",
-    Pending: "bg-blue-50 text-blue-600",
-    Cancelled: "bg-rose-50 text-rose-500",
-    Normal: "bg-blue-50 text-blue-600",
-    High: "bg-red-50 text-red-500",
+    Pending: "bg-blue-100 text-blue-600",
+    Processing: "bg-orange-100 text-orange-600",
+    Finished: "bg-emerald-100 text-emerald-600",
+    Cancelled: "bg-red-100 text-red-600",
+    Urgent: "bg-red-100 text-red-600",
+    High: "bg-orange-100 text-orange-600",
+    Normal: "bg-blue-100 text-blue-600",
     Low: "bg-slate-100 text-slate-500",
-    Urgent: "bg-red-50 text-red-500",
   };
 
   return (
-    <span className={`rounded-xl px-3 py-1 text-xs font-semibold ${map[children] || "bg-slate-100"}`}>
+    <span className={`rounded-xl px-3 py-1 text-xs font-semibold ${map[children] || "bg-slate-100 text-slate-500"}`}>
       {children}
     </span>
   );
@@ -383,10 +383,9 @@ function SellerDashboard() {
         }
       />
 
-      <div className="grid grid-cols-4 gap-5">
+      <div className="grid grid-cols-3 gap-5">
         <StatCard icon={ListChecks} value={stats ? String(stats.totalRequests) : "0"} title="Total Requests" note="All time" color="bg-orange-50 text-orange-500" />
         <StatCard icon={Ticket} value={stats ? String(stats.totalTickets) : "0"} title="Active Tickets" note={stats ? `${stats.pendingTickets} pending` : ""} color="bg-blue-50 text-blue-500" />
-        <StatCard icon={DollarSign} value="—" title="Revenue (Month)" note="Coming soon" color="bg-emerald-50 text-emerald-500" />
         <StatCard 
           icon={Star} 
           value={stats && parseFloat(stats.avgRating) > 0 ? stats.avgRating : "0.0"} 
