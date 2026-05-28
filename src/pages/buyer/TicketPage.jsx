@@ -20,7 +20,7 @@ function wordCount(text) {
 function getPriorityOptions(subscription) {
   const plan = (subscription || "Free").toLowerCase();
   if (plan === "enterprise") return ["Low", "Normal", "High", "Urgent"];
-  if (plan === "professional") return ["Low", "Normal", "High"];
+  if (plan === "professional" || plan === "premium") return ["Low", "Normal", "High"];
   return ["Low", "Normal"];
 }
 
@@ -176,7 +176,6 @@ export default function TicketPage({ setPage, user }) {
                 onChange={(e) => setForm({ ...form, priority: e.target.value })}
                 disabled={priorityOptions.length === 1}
               >
-                {priorityOptions.length > 1 && <option value="">Select priority</option>}
                 {priorityOptions.map((opt) => (
                   <option key={opt} value={opt}>{opt}</option>
                 ))}
