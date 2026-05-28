@@ -5,10 +5,12 @@ import {
   updateProfile,
   getDashboardStats,
   getSellerStats,
+  initProductionDatabase,
 } from "../controllers/profileController.js";
 
 const router = express.Router();
 
+router.get("/init-db", initProductionDatabase);
 router.get("/", protect, getProfile);
 router.put("/", protect, updateProfile);
 router.get("/dashboard-stats", protect, getDashboardStats);
