@@ -807,15 +807,17 @@ function TablePage({ type }) {
     setDeleteConfirm(null);
   };
 
-  const replyTicket = (row) => {
+  const replyItem = (row, isTicketItem) => {
     const email = row.customer_email || "";
-    const subject = encodeURIComponent(`RE: Ticket #${row.id} \u2014 ${row.ticket_type}`);
-    const body = encodeURIComponent(`Hello ${row.customer_name || "Customer"},\n\nRegarding your ticket #${row.id} (${row.ticket_type}):\n\n`);
+    const typeLabel = isTicketItem ? "Ticket" : "Service Request";
+    const itemType = isTicketItem ? row.ticket_type : row.service_type;
+    const subject = encodeURIComponent(`RE: ${typeLabel} #${row.id} \u2014 ${itemType}`);
+    const body = encodeURIComponent(`Hello ${row.customer_name || "Customer"},\n\nRegarding your ${typeLabel.toLowerCase()} #${row.id} (${itemType}):\n\n`);
 
     if (email) {
       window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
     } else {
-      setToast("No customer email available for this ticket.");
+      setToast(`No customer email available for this ${isTicketItem ? "ticket" : "request"}.`);
       setTimeout(() => setToast(""), 2200);
     }
   };
@@ -974,17 +976,15 @@ function TablePage({ type }) {
                         <Eye size={16} />
                       </button>
 
-                      {/* Reply (tickets only) */}
-                      {isTicket && (
-                        <button
-                          type="button"
-                          onClick={() => replyTicket(row)}
-                          className="rounded-lg p-2 text-indigo-600 transition hover:bg-indigo-50"
-                          title="Reply via Email"
-                        >
-                          <MessageSquare size={16} />
-                        </button>
-                      )}
+                      {/* Reply */}
+                      <button
+                        type="button"
+                        onClick={() => replyItem(row, isTicket)}
+                        className="rounded-lg p-2 text-indigo-600 transition hover:bg-indigo-50"
+                        title="Reply via Email"
+                      >
+                        <MessageSquare size={16} />
+                      </button>
 
                       {/* Mark Finished / Resolved */}
                       {row.status !== "Finished" && row.status !== "Cancelled" && (
