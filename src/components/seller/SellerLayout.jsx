@@ -31,6 +31,7 @@ import { getTickets, updateTicketStatus, deleteTicket as apiDeleteTicket } from 
 import { getServiceRequests, updateServiceRequestStatus, deleteServiceRequest as apiDeleteServiceRequest } from "../../services/serviceRequestService";
 import { getSellerStats } from "../../services/profileService";
 import { getUser } from "../../services/authService";
+import { getRating } from "../../services/ratingService";
 
 const go = (path) => {
   window.history.pushState({}, "", path);
@@ -102,6 +103,9 @@ function Badge({ children }) {
 }
 
 function Sidebar({ page }) {
+  const user = getUser() || { fullName: "Seller", email: "seller@sureserve.com" };
+  const initials = user.fullName ? user.fullName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : "S";
+
   const item = (id, label, Icon, path) => (
     <button
       type="button"
@@ -141,12 +145,12 @@ function Sidebar({ page }) {
       <div className="border-y border-white/10 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-orange-500 font-bold">
-            TK
+            {initials}
           </div>
 
           <div>
-            <p className="font-bold">TechKing Store</p>
-            <p className="text-xs font-bold text-orange-400">seller@techking.com</p>
+            <p className="font-bold max-w-[150px] truncate">{user.fullName}</p>
+            <p className="text-xs font-bold text-orange-400 max-w-[150px] truncate">{user.email}</p>
           </div>
         </div>
       </div>
@@ -156,6 +160,7 @@ function Sidebar({ page }) {
         {item("requests", "Manage Requests", ListChecks, "/seller-requests")}
         {item("tickets", "Manage Support Tickets", Ticket, "/seller-tickets")}
         {item("analytics", "Analytics", BarChart3, "/seller-analytics")}
+        {item("subscription", "Subscription", Star, "/seller-subscription")}
       </nav>
 
       <div className="mt-auto space-y-2 border-t border-white/10 pt-4">
@@ -234,9 +239,9 @@ function SellerNotificationDropdown({ isDarkMode }) {
   const handleClick = (item) => {
     setShow(false);
     if (item.notifType === "ticket") {
-      go("/seller-tickets");
+      go(`/seller-tickets#${item.id}`);
     } else {
-      go("/seller-requests");
+      go(`/seller-requests#${item.id}`);
     }
   };
 
@@ -551,11 +556,23 @@ function exportCsv(rows, isTicket) {
 function DetailsModal({ item, isTicket, onClose }) {
   if (!item) return null;
 
-  // Check for saved rating from buyer
-  const ratingKey = `rating_${isTicket ? "ticket" : "service"}_${item.id}`;
-  const reviewKey = `review_${isTicket ? "ticket" : "service"}_${item.id}`;
-  const savedRating = localStorage.getItem(ratingKey);
-  const savedReview = localStorage.getItem(reviewKey);
+  const [ratingData, setRatingData] = useState(null);
+  const [loadingRating, setLoadingRating] = useState(false);
+
+  useEffect(() => {
+    if (item.status === "Finished") {
+      setLoadingRating(true);
+      const source = isTicket ? "ticket" : "service";
+      getRating(source, item.id)
+        .then((res) => {
+          if (res.success && res.data) {
+            setRatingData(res.data);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setLoadingRating(false));
+    }
+  }, [item, isTicket]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
@@ -588,7 +605,17 @@ function DetailsModal({ item, isTicket, onClose }) {
 
           <div>
             <p className="text-slate-400">Phone Number</p>
-            <p className="font-bold">{item.phone || item.contact_person_phone || "—"}</p>
+            <p className="font-bold">{item.phone || item.contact_person_phone || item.customer_phone || "—"}</p>
+          </div>
+
+          <div>
+            <p className="text-slate-400">Address</p>
+            <p className="font-bold">{item.customer_address || "—"}</p>
+          </div>
+
+          <div>
+            <p className="text-slate-400">Premium Status</p>
+            <Badge>{item.customer_subscription || "Free"}</Badge>
           </div>
 
           <div>
@@ -615,8 +642,17 @@ function DetailsModal({ item, isTicket, onClose }) {
             <Badge>{item.priority}</Badge>
           </div>
 
+          {item.preferred_date && (
+            <div>
+              <p className="text-slate-400">Preferred Date</p>
+              <p className="font-bold">
+                {new Date(item.preferred_date).toLocaleDateString()} {item.preferred_time || ""}
+              </p>
+            </div>
+          )}
+
           <div>
-            <p className="text-slate-400">Date</p>
+            <p className="text-slate-400">Submitted On</p>
             <p className="font-bold">{item.created_at ? new Date(item.created_at).toLocaleDateString() : "—"}</p>
           </div>
         </div>
@@ -633,23 +669,25 @@ function DetailsModal({ item, isTicket, onClose }) {
         {item.status === "Finished" && (
           <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
             <p className="mb-2 text-sm font-bold text-amber-700">Customer Rating</p>
-            {savedRating ? (
+            {loadingRating ? (
+              <p className="text-sm text-amber-600">Loading rating...</p>
+            ) : ratingData ? (
               <div>
                 <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((s) => (
                     <Star
                       key={s}
                       className={`h-5 w-5 ${
-                        s <= parseInt(savedRating)
+                        s <= ratingData.rating
                           ? "fill-amber-400 text-amber-400"
                           : "fill-none text-slate-300"
                       }`}
                     />
                   ))}
-                  <span className="ml-2 text-sm font-bold text-amber-600">{savedRating}/5</span>
+                  <span className="ml-2 text-sm font-bold text-amber-600">{ratingData.rating}/5</span>
                 </div>
-                {savedReview && (
-                  <p className="mt-2 text-sm italic text-amber-700">"{savedReview}"</p>
+                {ratingData.review && (
+                  <p className="mt-2 text-sm italic text-amber-700">"{ratingData.review}"</p>
                 )}
               </div>
             ) : (
@@ -693,6 +731,8 @@ function TablePage({ type }) {
   const [confirmAction, setConfirmAction] = useState(null); // {id, action, label}
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
+  const [highlightId, setHighlightId] = useState(null);
+
   useEffect(() => {
     setLoading(true);
     const fetcher = isTicket ? getTickets : getServiceRequests;
@@ -701,7 +741,18 @@ function TablePage({ type }) {
         if (res.success) setRows(res.data);
       })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        const hash = window.location.hash.replace("#", "");
+        if (hash) {
+          setHighlightId(parseInt(hash));
+          setTimeout(() => {
+            const el = document.getElementById(`row-${hash}`);
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+          }, 100);
+          setTimeout(() => setHighlightId(null), 3000);
+        }
+      });
   }, [isTicket]);
 
   const filteredRows = useMemo(() => {
@@ -869,7 +920,13 @@ function TablePage({ type }) {
 
             <tbody>
               {filteredRows.map((row) => (
-                <tr className="border-t border-orange-100" key={row.id}>
+                <tr
+                  className={`border-t border-orange-100 transition-colors duration-1000 ${
+                    highlightId === row.id ? "bg-amber-100/60 ring-2 ring-amber-400" : ""
+                  }`}
+                  key={row.id}
+                  id={`row-${row.id}`}
+                >
                   <td className={`px-5 py-5 font-bold ${isTicket ? "text-blue-600" : "text-orange-500"}`}>
                     #{row.id}
                   </td>
@@ -1243,10 +1300,24 @@ function Analytics() {
   );
 }
 
+import AdvancedSubscription from "./AdvancedSubscription";
+
 export default function SellerPortal({ page }) {
   if (page === "requests") return <TablePage type="requests" />;
   if (page === "tickets") return <TablePage type="tickets" />;
   if (page === "analytics") return <Analytics />;
+  if (page === "subscription") {
+    return (
+      <Shell page="subscription">
+        <AdvancedSubscription user={getUser()} onUpgrade={(plan) => {
+           const user = getUser();
+           user.subscription = plan;
+           localStorage.setItem("user", JSON.stringify(user));
+           window.location.reload();
+        }} />
+      </Shell>
+    );
+  }
 
   return <SellerDashboard />;
 }

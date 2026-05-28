@@ -19,9 +19,9 @@ function wordCount(text) {
 
 function getPriorityOptions(subscription) {
   const plan = (subscription || "Free").toLowerCase();
-  if (plan === "enterprise") return ["Low", "High", "Urgent"];
-  if (plan === "professional") return ["Low", "High"];
-  return ["Low"];
+  if (plan === "enterprise") return ["Low", "Normal", "High", "Urgent"];
+  if (plan === "professional") return ["Low", "Normal", "High"];
+  return ["Low", "Normal"];
 }
 
 function FieldWrap({ label, required, icon: Icon, children, extra }) {
@@ -48,7 +48,7 @@ export default function TicketPage({ setPage, user }) {
 
   const [form, setForm] = useState({
     ticketType: "",
-    priority: priorityOptions.length === 1 ? priorityOptions[0] : "",
+    priority: "Normal",
     contactPerson: "",
     phone: "",
     description: "",
@@ -89,7 +89,7 @@ export default function TicketPage({ setPage, user }) {
 
       if (result.success) {
         setMessage("Ticket submitted successfully!");
-        setForm({ ticketType: "", priority: priorityOptions.length === 1 ? priorityOptions[0] : "", contactPerson: "", phone: "", description: "" });
+        setForm({ ticketType: "", priority: "Normal", contactPerson: "", phone: "", description: "" });
         // Navigate to recent tickets so user sees the new ticket
         setTimeout(() => setPage("recent"), 800);
       } else {

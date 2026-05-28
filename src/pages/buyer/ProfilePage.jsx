@@ -27,7 +27,8 @@ export default function ProfilePage({ isDarkMode, setIsDarkMode, user, onUpdateU
   });
 
   useEffect(() => {
-    const savedPhoto = localStorage.getItem("profilePhoto") || "";
+    const photoKey = \`profilePhoto_\${user?.id || 'default'}\`;
+    const savedPhoto = localStorage.getItem(photoKey) || "";
     
     getProfile()
       .then((res) => {
@@ -75,7 +76,8 @@ export default function ProfilePage({ isDarkMode, setIsDarkMode, user, onUpdateU
       
       // Save photo to local storage (frontend only)
       if (profile.photo) {
-        localStorage.setItem("profilePhoto", profile.photo);
+        const photoKey = \`profilePhoto_\${user?.id || 'default'}\`;
+        localStorage.setItem(photoKey, profile.photo);
       }
       
       if (res.success) {

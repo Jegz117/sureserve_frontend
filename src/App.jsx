@@ -29,6 +29,7 @@ export default function App() {
     "/seller-requests": "requests",
     "/seller-tickets": "tickets",
     "/seller-analytics": "analytics",
+    "/seller-subscription": "subscription",
   };
 
   if (path === "/seller-login") {

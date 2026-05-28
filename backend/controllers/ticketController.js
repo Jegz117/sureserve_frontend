@@ -12,10 +12,10 @@ export const createTicket = async (req, res) => {
     }
 
     const result = await db.query(
-      `INSERT INTO tickets (user_id, ticket_type, priority, contact_person, phone, description)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO tickets (user_id, ticket_type, priority, contact_person, phone, description, preferred_date)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id`,
-      [req.user.id, ticketType.trim(), priority, contactPerson, phone, description]
+      [req.user.id, ticketType.trim(), priority, contactPerson, phone, description, req.body.preferredDate || null]
     );
 
     return res.status(201).json({
@@ -38,7 +38,7 @@ export const getTickets = async (req, res) => {
 
     if (user.role === "provider" || user.role === "admin") {
       result = await db.query(
-        `SELECT t.*, u.full_name AS customer_name, u.email AS customer_email
+        `SELECT t.*, u.full_name AS customer_name, u.email AS customer_email, u.phone AS customer_phone, u.address AS customer_address, u.subscription AS customer_subscription
          FROM tickets t JOIN users u ON t.user_id = u.id
          ORDER BY t.created_at DESC`
       );

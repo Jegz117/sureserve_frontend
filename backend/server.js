@@ -9,6 +9,7 @@ import bookingRoutes from "./routes/bookingRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import ticketRoutes from "./routes/ticketRoutes.js";
 import serviceRequestRoutes from "./routes/serviceRequestRoutes.js";
+import ratingRoutes from "./routes/ratingRoutes.js";
 
 dotenv.config();
 
@@ -37,6 +38,7 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/tickets", ticketRoutes);
 app.use("/api/service-requests", serviceRequestRoutes);
+app.use("/api/ratings", ratingRoutes);
 
 // Root route
 app.get("/", (req, res) => {

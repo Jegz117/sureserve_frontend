@@ -549,21 +549,6 @@ export default function AppAuth({ onLogin, portalType = "buyer" }) {
                 </p>
               )}
 
-              {/* Seller / Buyer portal toggle */}
-              {isSellerPortal && (
-                <div className="mt-4 text-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      window.history.pushState({}, "", "/");
-                      window.dispatchEvent(new PopStateEvent("popstate"));
-                    }}
-                    className="inline-flex items-center gap-2 font-semibold text-blue-600 hover:underline"
-                  >
-                    <ShoppingBag className="h-4 w-4" />
-                    Login as Buyer
-                  </button>
-                </div>
               )}
             </form>
           </div>

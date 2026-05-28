@@ -19,9 +19,9 @@ function wordCount(text) {
 
 function getPriorityOptions(subscription) {
   const plan = (subscription || "Free").toLowerCase();
-  if (plan === "enterprise") return ["Low", "High", "Urgent"];
-  if (plan === "professional") return ["Low", "High"];
-  return ["Low"];
+  if (plan === "enterprise") return ["Low", "Normal", "High", "Urgent"];
+  if (plan === "professional") return ["Low", "Normal", "High"];
+  return ["Low", "Normal"];
 }
 
 function FieldWrap({ label, required, icon: Icon, children, extra }) {
@@ -48,7 +48,7 @@ export default function InstallationPage({ setPage, user }) {
 
   const [form, setForm] = useState({
     serviceType: "",
-    priority: priorityOptions.length === 1 ? priorityOptions[0] : "",
+    priority: "Normal",
     location: "",
     contactPerson: "",
     phone: "",
@@ -94,7 +94,7 @@ export default function InstallationPage({ setPage, user }) {
         setMessage("Service request submitted successfully!");
         setForm({
           serviceType: "",
-          priority: priorityOptions.length === 1 ? priorityOptions[0] : "",
+          priority: "Normal",
           location: "",
           contactPerson: "",
           phone: "",

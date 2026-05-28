@@ -6,7 +6,7 @@ import db from "../db.js";
 export const getProfile = async (req, res) => {
   try {
     const result = await db.query(
-      "SELECT id, full_name, email, phone, address, role, created_at FROM users WHERE id = $1",
+      "SELECT id, full_name, email, phone, address, role, subscription, created_at FROM users WHERE id = $1",
       [req.user.id]
     );
 
@@ -25,16 +25,17 @@ export const getProfile = async (req, res) => {
 // @access  Private
 export const updateProfile = async (req, res) => {
   try {
-    const { fullName, email, phone, address } = req.body;
+    const { fullName, email, phone, address, subscription } = req.body;
 
     await db.query(
       `UPDATE users
        SET full_name  = COALESCE($1, full_name),
            email      = COALESCE($2, email),
            phone      = COALESCE($3, phone),
-           address    = COALESCE($4, address)
-       WHERE id = $5`,
-      [fullName, email, phone, address, req.user.id]
+           address    = COALESCE($4, address),
+           subscription = COALESCE($5, subscription)
+       WHERE id = $6`,
+      [fullName, email, phone, address, subscription, req.user.id]
     );
 
     return res.json({ success: true, message: "Profile updated successfully" });

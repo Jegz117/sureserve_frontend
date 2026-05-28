@@ -61,7 +61,7 @@ export const getServiceRequests = async (req, res) => {
 
     if (user.role === "provider" || user.role === "admin") {
       result = await db.query(
-        `SELECT sr.*, u.full_name AS customer_name, u.email AS customer_email
+        `SELECT sr.*, u.full_name AS customer_name, u.email AS customer_email, u.phone AS customer_phone, u.address AS customer_address, u.subscription AS customer_subscription
          FROM service_requests sr JOIN users u ON sr.user_id = u.id
          ORDER BY sr.created_at DESC`
       );

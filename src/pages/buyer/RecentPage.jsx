@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { getTickets, deleteTicket as apiDeleteTicket } from "../../services/ticketService";
 import { getServiceRequests, deleteServiceRequest as apiDeleteServiceRequest } from "../../services/serviceRequestService";
+import { submitRating, getRating } from "../../services/ratingService";
 
 const typeIconMap = {
   "Technical Support": Monitor,
@@ -159,34 +160,53 @@ function TicketDetailsModal({ ticket, onClose }) {
   const reviewKey = `review_${ticket.source}_${ticket.id}`;
   const lockedKey = `ratingLocked_${ticket.source}_${ticket.id}`;
 
-  const [rating, setRating] = useState(() => {
-    const saved = localStorage.getItem(ratingKey);
-    return saved ? parseInt(saved) : 0;
-  });
-  const [reviewText, setReviewText] = useState(() => {
-    return localStorage.getItem(reviewKey) || "";
-  });
-  const [locked, setLocked] = useState(() => {
-    return localStorage.getItem(lockedKey) === "true";
-  });
+  const [rating, setRating] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [locked, setLocked] = useState(false);
   const [showRatingConfirm, setShowRatingConfirm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isFinished) {
+      getRating(ticket.source, ticket.id)
+        .then((res) => {
+          if (res.success && res.data) {
+            setRating(res.data.rating);
+            setReviewText(res.data.review || "");
+            setLocked(true);
+            
+            // Also store in localStorage for the table view's quick check
+            localStorage.setItem(`rating_${ticket.source}_${ticket.id}`, String(res.data.rating));
+          }
+        })
+        .catch(() => {});
+    }
+  }, [ticket, isFinished]);
 
   const handleRate = (stars) => {
     if (locked) return;
     setRating(stars);
-    localStorage.setItem(ratingKey, String(stars));
   };
 
   const handleSubmitRating = () => {
+    if (rating === 0) return;
     setShowRatingConfirm(true);
   };
 
-  const confirmSubmitRating = () => {
-    localStorage.setItem(ratingKey, String(rating));
-    localStorage.setItem(reviewKey, reviewText);
-    localStorage.setItem(lockedKey, "true");
-    setLocked(true);
-    setShowRatingConfirm(false);
+  const confirmSubmitRating = async () => {
+    setIsSubmitting(true);
+    try {
+      const res = await submitRating(ticket.source, ticket.id, rating, reviewText);
+      if (res.success) {
+        localStorage.setItem(`rating_${ticket.source}_${ticket.id}`, String(rating));
+        setLocked(true);
+        setShowRatingConfirm(false);
+      }
+    } catch {
+      // silent fail
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const TypeIcon = getTypeIcon(ticket.itemType);
@@ -244,6 +264,12 @@ function TicketDetailsModal({ ticket, onClose }) {
                 {ticket.priority}
               </span>
             </div>
+            {ticket.preferred_date && (
+              <div>
+                <p className="text-slate-400">Preferred Date</p>
+                <p className="font-bold text-slate-900">{formatDate(ticket.preferred_date)} {ticket.preferred_time || ""}</p>
+              </div>
+            )}
           </div>
 
           {/* Star Rating for Finished tickets */}
@@ -279,9 +305,10 @@ function TicketDetailsModal({ ticket, onClose }) {
                 <button
                   type="button"
                   onClick={handleSubmitRating}
-                  className="mt-3 rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold text-white transition hover:bg-amber-600"
+                  disabled={isSubmitting}
+                  className="mt-3 rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold text-white transition hover:bg-amber-600 disabled:opacity-50"
                 >
-                  Submit Rating
+                  {isSubmitting ? "Submitting..." : "Submit Rating"}
                 </button>
               )}
             </div>
