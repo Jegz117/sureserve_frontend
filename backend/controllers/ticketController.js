@@ -47,7 +47,7 @@ export const getTickets = async (req, res) => {
     const user = req.user;
     let result;
 
-    if (user.role === "provider" || user.role === "admin") {
+    if (user.role === "provider" || user.role === "admin" || user.role === "seller") {
       try {
         result = await db.query(
           `SELECT t.*, u.full_name AS customer_name, u.email AS customer_email, u.phone AS customer_phone, u.address AS customer_address, u.subscription AS customer_subscription

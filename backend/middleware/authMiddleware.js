@@ -24,7 +24,7 @@ export const protect = async (req, res, next) => {
 };
 
 export const providerOnly = (req, res, next) => {
-  if (req.user && (req.user.role === 'provider' || req.user.role === 'admin')) {
+  if (req.user && (req.user.role === 'provider' || req.user.role === 'admin' || req.user.role === 'seller')) {
     next();
   } else {
     res.status(403).json({ success: false, message: "Not authorized as a provider" });

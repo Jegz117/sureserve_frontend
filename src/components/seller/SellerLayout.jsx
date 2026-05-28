@@ -787,6 +787,9 @@ function TablePage({ type }) {
         );
         setToast(`#${id} marked as ${nextStatus}.`);
         setTimeout(() => setToast(""), 1800);
+      } else {
+        setToast(`Failed: ${res.message}`);
+        setTimeout(() => setToast(""), 3000);
       }
     } catch {}
   };
