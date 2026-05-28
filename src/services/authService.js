@@ -31,6 +31,27 @@ const getStoragePrefix = () => {
   return window.location.pathname.startsWith('/seller-') ? 'seller_' : 'buyer_';
 };
 
+// One-time migration: move old un-prefixed keys to the correct prefixed keys
+(function migrateOldAuthKeys() {
+  const oldToken = localStorage.getItem("token");
+  const oldUser = localStorage.getItem("user");
+  if (oldToken && oldUser) {
+    try {
+      const parsed = JSON.parse(oldUser);
+      const isSeller = parsed.role === "provider" || parsed.role === "admin" || parsed.role === "seller";
+      const prefix = isSeller ? "seller_" : "buyer_";
+      // Only migrate if the new key doesn't already exist
+      if (!localStorage.getItem(prefix + "token")) {
+        localStorage.setItem(prefix + "token", oldToken);
+        localStorage.setItem(prefix + "user", oldUser);
+      }
+    } catch {}
+    // Remove old keys to prevent confusion
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+  }
+})();
+
 export const saveAuthData = ({ token, user }) => {
   const isSeller = user.role === 'provider' || user.role === 'admin' || user.role === 'seller';
   const prefix = isSeller ? 'seller_' : 'buyer_';
