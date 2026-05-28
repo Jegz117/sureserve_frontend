@@ -1125,10 +1125,28 @@ function Analytics() {
 
 function Analytics() {
   const [stats, setStats] = useState(null);
+  const [serviceData, setServiceData] = useState([]);
 
   useEffect(() => {
     getSellerStats().then(res => {
       if (res.success) setStats(res.data);
+    }).catch(() => {});
+
+    getServiceRequests().then(res => {
+      if (res.success) {
+        const counts = {};
+        res.data.forEach(req => {
+          const type = req.service_type || 'Other';
+          counts[type] = (counts[type] || 0) + 1;
+        });
+        
+        // Convert to array and sort by count descending
+        const sorted = Object.entries(counts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 6); // Take top 6
+          
+        setServiceData(sorted);
+      }
     }).catch(() => {});
   }, []);
 
@@ -1266,22 +1284,23 @@ function Analytics() {
         <div className="rounded-2xl bg-white p-7 shadow-sm ring-1 ring-orange-100">
           <h3 className="text-lg font-extrabold">Requests by Service Type</h3>
 
-          {[
-            ["TV Installation", 34],
-            ["AC Installation", 28],
-            ["Network Setup", 22],
-            ["CCTV System", 18],
-            ["Smart Home", 14],
-            ["Other", 8],
-          ].map(([label, value]) => (
-            <div key={label} className="mt-4 flex items-center gap-4">
-              <span className="w-36 text-xs text-slate-500">{label}</span>
-              <div className="h-5 flex-1 rounded bg-slate-50">
-                <div className="h-full rounded bg-orange-500" style={{ width: `${value * 2.3}%` }} />
-              </div>
-              <span className="w-8 text-right text-xs font-bold text-slate-600">{value}</span>
-            </div>
-          ))}
+          {serviceData.length === 0 ? (
+            <p className="mt-5 text-sm text-slate-500">No requests yet.</p>
+          ) : (
+            serviceData.map(([label, value]) => {
+              const maxCount = Math.max(...serviceData.map(d => d[1]), 1);
+              const percentage = (value / maxCount) * 100;
+              return (
+                <div key={label} className="mt-4 flex items-center gap-4">
+                  <span className="w-40 truncate text-xs text-slate-500" title={label}>{label}</span>
+                  <div className="h-5 flex-1 rounded bg-slate-50">
+                    <div className="h-full rounded bg-orange-500" style={{ width: `${percentage}%` }} />
+                  </div>
+                  <span className="w-8 text-right text-xs font-bold text-slate-600">{value}</span>
+                </div>
+              );
+            })
+          )}
         </div>
 
         <div className="space-y-5">
