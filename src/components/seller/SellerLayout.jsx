@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import AdvancedSubscription from "./AdvancedSubscription";
 import {
   Bolt,
   ListChecks,
@@ -1345,8 +1346,6 @@ function Analytics() {
     </Shell>
   );
 }
-
-import AdvancedSubscription from "./AdvancedSubscription";
 
 export default function SellerPortal({ page }) {
   if (page === "requests") return <TablePage type="requests" />;
