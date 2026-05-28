@@ -378,7 +378,13 @@ function SellerDashboard() {
         <StatCard icon={ListChecks} value={stats ? String(stats.totalRequests) : "0"} title="Total Requests" note="All time" color="bg-orange-50 text-orange-500" />
         <StatCard icon={Ticket} value={stats ? String(stats.totalTickets) : "0"} title="Active Tickets" note={stats ? `${stats.pendingTickets} pending` : ""} color="bg-blue-50 text-blue-500" />
         <StatCard icon={DollarSign} value="—" title="Revenue (Month)" note="Coming soon" color="bg-emerald-50 text-emerald-500" />
-        <StatCard icon={Star} value="4.8" title="Customer Rating" note="Based on 98 reviews" color="bg-amber-50 text-amber-500" />
+        <StatCard 
+          icon={Star} 
+          value={stats && parseFloat(stats.avgRating) > 0 ? stats.avgRating : "0.0"} 
+          title="Customer Rating" 
+          note={stats ? `Based on ${stats.totalRatings} review${stats.totalRatings === 1 ? '' : 's'}` : "No reviews yet"} 
+          color="bg-amber-50 text-amber-500" 
+        />
       </div>
 
       <div className="mt-7 grid grid-cols-[1fr_390px] gap-6">

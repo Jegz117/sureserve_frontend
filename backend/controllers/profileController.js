@@ -91,6 +91,7 @@ export const getSellerStats = async (req, res) => {
     const processingTickets = await db.query("SELECT COUNT(*) AS c FROM tickets WHERE status = 'Processing'");
     const finishedTickets = await db.query("SELECT COUNT(*) AS c FROM tickets WHERE status = 'Finished'");
     const pendingTickets = await db.query("SELECT COUNT(*) AS c FROM tickets WHERE status = 'Pending'");
+    const ratingsStat = await db.query("SELECT AVG(rating) AS avg_rating, COUNT(*) AS total_ratings FROM ratings");
 
     return res.json({
       success: true,
@@ -104,6 +105,8 @@ export const getSellerStats = async (req, res) => {
         processingTickets: parseInt(processingTickets.rows[0].c),
         finishedTickets: parseInt(finishedTickets.rows[0].c),
         pendingTickets: parseInt(pendingTickets.rows[0].c),
+        avgRating: ratingsStat.rows[0].avg_rating ? parseFloat(ratingsStat.rows[0].avg_rating).toFixed(1) : "0.0",
+        totalRatings: parseInt(ratingsStat.rows[0].total_ratings || 0),
       },
     });
   } catch (error) {
