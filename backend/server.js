@@ -14,11 +14,12 @@ const app = express();
 // CORS
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin: [
+      "https://sureserve-frontend-mauve.vercel.app",
+    ],
     credentials: true,
   })
 );
-
 // Middleware
 app.use(express.json());
 
