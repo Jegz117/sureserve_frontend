@@ -56,9 +56,11 @@ export const loginUser = async (req, res) => {
       });
     }
 
+    const roleFilter = role === "seller" ? "provider" : role;
+
     const users = await db.query(
       "SELECT * FROM users WHERE email = $1 AND role = $2",
-      [email, role]
+      [email, roleFilter]
     );
 
     if (users.rows.length === 0) {
