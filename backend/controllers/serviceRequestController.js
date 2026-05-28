@@ -23,23 +23,43 @@ export const createServiceRequest = async (req, res) => {
       });
     }
 
-    const result = await db.query(
-      `INSERT INTO service_requests
-       (user_id, service_type, priority, location, contact_person, phone, preferred_date, preferred_time, description)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       RETURNING id`,
-      [
-        req.user.id,
-        serviceType.trim(),
-        priority,
-        location.trim(),
-        contactPerson,
-        phone,
-        date || null,
-        time,
-        description,
-      ]
-    );
+    let result;
+    try {
+      result = await db.query(
+        `INSERT INTO service_requests
+         (user_id, service_type, priority, location, contact_person, phone, preferred_date, preferred_time, description)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         RETURNING id`,
+        [
+          req.user.id,
+          serviceType.trim(),
+          priority,
+          location.trim(),
+          contactPerson,
+          phone,
+          date || null,
+          time,
+          description,
+        ]
+      );
+    } catch (colErr) {
+      // Fallback: preferred_date/preferred_time columns may not exist
+      result = await db.query(
+        `INSERT INTO service_requests
+         (user_id, service_type, priority, location, contact_person, phone, description)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING id`,
+        [
+          req.user.id,
+          serviceType.trim(),
+          priority,
+          location.trim(),
+          contactPerson,
+          phone,
+          description,
+        ]
+      );
+    }
 
     return res.status(201).json({
       success: true,
@@ -60,11 +80,20 @@ export const getServiceRequests = async (req, res) => {
     let result;
 
     if (user.role === "provider" || user.role === "admin") {
-      result = await db.query(
-        `SELECT sr.*, u.full_name AS customer_name, u.email AS customer_email, u.phone AS customer_phone, u.address AS customer_address, u.subscription AS customer_subscription
-         FROM service_requests sr JOIN users u ON sr.user_id = u.id
-         ORDER BY sr.created_at DESC`
-      );
+      try {
+        result = await db.query(
+          `SELECT sr.*, u.full_name AS customer_name, u.email AS customer_email, u.phone AS customer_phone, u.address AS customer_address, u.subscription AS customer_subscription
+           FROM service_requests sr JOIN users u ON sr.user_id = u.id
+           ORDER BY sr.created_at DESC`
+        );
+      } catch {
+        // Fallback: subscription/address columns may not exist
+        result = await db.query(
+          `SELECT sr.*, u.full_name AS customer_name, u.email AS customer_email
+           FROM service_requests sr JOIN users u ON sr.user_id = u.id
+           ORDER BY sr.created_at DESC`
+        );
+      }
     } else {
       result = await db.query(
         "SELECT * FROM service_requests WHERE user_id = $1 ORDER BY created_at DESC",

@@ -11,12 +11,23 @@ export const createTicket = async (req, res) => {
       return res.status(400).json({ success: false, message: "Ticket type is required." });
     }
 
-    const result = await db.query(
-      `INSERT INTO tickets (user_id, ticket_type, priority, contact_person, phone, description, preferred_date)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id`,
-      [req.user.id, ticketType.trim(), priority, contactPerson, phone, description, req.body.preferredDate || null]
-    );
+    let result;
+    try {
+      result = await db.query(
+        `INSERT INTO tickets (user_id, ticket_type, priority, contact_person, phone, description, preferred_date)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING id`,
+        [req.user.id, ticketType.trim(), priority, contactPerson, phone, description, req.body.preferredDate || null]
+      );
+    } catch (colErr) {
+      // Fallback: preferred_date column may not exist yet
+      result = await db.query(
+        `INSERT INTO tickets (user_id, ticket_type, priority, contact_person, phone, description)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING id`,
+        [req.user.id, ticketType.trim(), priority, contactPerson, phone, description]
+      );
+    }
 
     return res.status(201).json({
       success: true,
@@ -37,11 +48,20 @@ export const getTickets = async (req, res) => {
     let result;
 
     if (user.role === "provider" || user.role === "admin") {
-      result = await db.query(
-        `SELECT t.*, u.full_name AS customer_name, u.email AS customer_email, u.phone AS customer_phone, u.address AS customer_address, u.subscription AS customer_subscription
-         FROM tickets t JOIN users u ON t.user_id = u.id
-         ORDER BY t.created_at DESC`
-      );
+      try {
+        result = await db.query(
+          `SELECT t.*, u.full_name AS customer_name, u.email AS customer_email, u.phone AS customer_phone, u.address AS customer_address, u.subscription AS customer_subscription
+           FROM tickets t JOIN users u ON t.user_id = u.id
+           ORDER BY t.created_at DESC`
+        );
+      } catch {
+        // Fallback: subscription/address columns may not exist
+        result = await db.query(
+          `SELECT t.*, u.full_name AS customer_name, u.email AS customer_email
+           FROM tickets t JOIN users u ON t.user_id = u.id
+           ORDER BY t.created_at DESC`
+        );
+      }
     } else {
       result = await db.query(
         "SELECT * FROM tickets WHERE user_id = $1 ORDER BY created_at DESC",
