@@ -69,7 +69,9 @@ export default function ProfilePage({ isDarkMode, setIsDarkMode, user, onUpdateU
   const handleSave = async () => {
     setSaveMessage("");
     try {
-      const res = await updateProfile(profile);
+      // Don't send the large base64 photo string to the backend to avoid payload too large errors
+      const { photo, ...profileData } = profile;
+      const res = await updateProfile(profileData);
       
       // Save photo to local storage (frontend only)
       if (profile.photo) {
