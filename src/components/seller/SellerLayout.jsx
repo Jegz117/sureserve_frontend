@@ -1084,9 +1084,28 @@ function Analytics() {
   const sellerPlan = (sellerUser?.subscription || "Free").toLowerCase();
   const isPremium = sellerPlan === "professional" || sellerPlan === "enterprise";
 
+  const [serviceData, setServiceData] = useState([]);
+
   useEffect(() => {
     getSellerStats().then((res) => {
       if (res.success) setStats(res.data);
+    }).catch(() => {});
+
+    getServiceRequests().then(res => {
+      if (res.success) {
+        const counts = {};
+        res.data.forEach(req => {
+          const type = req.service_type || 'Other';
+          counts[type] = (counts[type] || 0) + 1;
+        });
+        
+        // Convert to array and sort by count descending
+        const sorted = Object.entries(counts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 6); // Take top 6
+          
+        setServiceData(sorted);
+      }
     }).catch(() => {});
   }, []);
 
@@ -1124,32 +1143,7 @@ function Analytics() {
     );
   }
 
-function Analytics() {
-  const [stats, setStats] = useState(null);
-  const [serviceData, setServiceData] = useState([]);
 
-  useEffect(() => {
-    getSellerStats().then(res => {
-      if (res.success) setStats(res.data);
-    }).catch(() => {});
-
-    getServiceRequests().then(res => {
-      if (res.success) {
-        const counts = {};
-        res.data.forEach(req => {
-          const type = req.service_type || 'Other';
-          counts[type] = (counts[type] || 0) + 1;
-        });
-        
-        // Convert to array and sort by count descending
-        const sorted = Object.entries(counts)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 6); // Take top 6
-          
-        setServiceData(sorted);
-      }
-    }).catch(() => {});
-  }, []);
 
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
   const requestData = [12, 18, 14, 22, 19, 25];
