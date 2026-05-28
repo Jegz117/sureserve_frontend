@@ -27,21 +27,42 @@ export const loginSellerAccount = async ({ email, password }) => {
   return response.json();
 };
 
+const getStoragePrefix = () => {
+  return window.location.pathname.startsWith('/seller-') ? 'seller_' : 'buyer_';
+};
+
 export const saveAuthData = ({ token, user }) => {
-  localStorage.setItem("token", token);
-  localStorage.setItem("user", JSON.stringify(user));
+  const isSeller = user.role === 'provider' || user.role === 'admin' || user.role === 'seller';
+  const prefix = isSeller ? 'seller_' : 'buyer_';
+  localStorage.setItem(prefix + "token", token);
+  localStorage.setItem(prefix + "user", JSON.stringify(user));
 };
 
 export const clearAuthData = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
+  const prefix = getStoragePrefix();
+  localStorage.removeItem(prefix + "token");
+  localStorage.removeItem(prefix + "user");
 };
 
-export const getAuthToken = () => localStorage.getItem("token");
+export const getAuthToken = () => {
+  const prefix = getStoragePrefix();
+  return localStorage.getItem(prefix + "token");
+};
 
 export const getUser = () => {
-  const raw = localStorage.getItem("user");
+  const prefix = getStoragePrefix();
+  const raw = localStorage.getItem(prefix + "user");
   return raw ? JSON.parse(raw) : null;
+};
+
+export const updateUserLocal = (newData) => {
+  const prefix = getStoragePrefix();
+  const raw = localStorage.getItem(prefix + "user");
+  if (raw) {
+    const user = JSON.parse(raw);
+    const updated = { ...user, ...newData };
+    localStorage.setItem(prefix + "user", JSON.stringify(updated));
+  }
 };
 
 export const authHeaders = () => ({

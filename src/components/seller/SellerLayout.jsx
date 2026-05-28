@@ -30,7 +30,7 @@ import { logoutSeller } from "../../utils/sellerAuth";
 import { getTickets, updateTicketStatus, deleteTicket as apiDeleteTicket } from "../../services/ticketService";
 import { getServiceRequests, updateServiceRequestStatus, deleteServiceRequest as apiDeleteServiceRequest } from "../../services/serviceRequestService";
 import { getSellerStats } from "../../services/profileService";
-import { getUser } from "../../services/authService";
+import { getUser, updateUserLocal } from "../../services/authService";
 import { getRating } from "../../services/ratingService";
 
 const go = (path) => {
@@ -400,9 +400,11 @@ function SellerDashboard() {
             <div className="p-8 text-center text-slate-400">No requests yet.</div>
           ) : (
             recentRequests.map((req) => (
-              <div
+              <button
+                type="button"
+                onClick={() => go(`/seller-requests#${req.id}`)}
                 key={req.id}
-                className="flex items-center gap-4 border-b border-slate-100 px-6 py-4"
+                className="flex w-full cursor-pointer items-center gap-4 border-b border-slate-100 px-6 py-4 text-left transition-colors hover:bg-orange-50/50"
               >
                 <span className="flex-shrink-0 rounded-xl bg-orange-50 px-3 py-2 text-xs font-bold text-orange-500">
                   #{req.id}
@@ -419,7 +421,7 @@ function SellerDashboard() {
                 <span className="flex-shrink-0 text-xs text-slate-400">
                   {new Date(req.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                 </span>
-              </div>
+              </button>
             ))
           )}
         </div>
@@ -1316,9 +1318,7 @@ export default function SellerPortal({ page }) {
     return (
       <Shell page="subscription">
         <AdvancedSubscription user={getUser()} onUpgrade={(plan) => {
-           const user = getUser();
-           user.subscription = plan;
-           localStorage.setItem("user", JSON.stringify(user));
+           updateUserLocal({ subscription: plan });
            window.location.reload();
         }} />
       </Shell>

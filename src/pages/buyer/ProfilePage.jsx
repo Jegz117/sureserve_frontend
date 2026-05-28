@@ -12,6 +12,7 @@ import {
   Camera,
 } from "lucide-react";
 import { getProfile, updateProfile } from "../../services/profileService";
+import { updateUserLocal } from "../../services/authService";
 
 export default function ProfilePage({ isDarkMode, setIsDarkMode, user, onUpdateUser }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -85,15 +86,9 @@ export default function ProfilePage({ isDarkMode, setIsDarkMode, user, onUpdateU
         setSaveMessage("Profile updated successfully!");
 
         // Also update localStorage user data
-        const raw = localStorage.getItem("user");
-        if (raw) {
-          const storedUser = JSON.parse(raw);
-          storedUser.fullName = profile.fullName;
-          storedUser.email = profile.email;
-          localStorage.setItem("user", JSON.stringify(storedUser));
-          if (onUpdateUser) {
-             onUpdateUser({ ...user, fullName: profile.fullName, email: profile.email });
-          }
+        updateUserLocal({ fullName: profile.fullName, email: profile.email });
+        if (onUpdateUser) {
+           onUpdateUser({ ...user, fullName: profile.fullName, email: profile.email });
         }
       } else {
         setSaveMessage(res.message || "Update failed.");
