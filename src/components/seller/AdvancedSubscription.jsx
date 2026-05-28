@@ -17,7 +17,7 @@ const plans = [
   {
     name: "Professional",
     subtitle: "For growing service businesses",
-    price: "29",
+    price: "299",
     icon: Zap,
     accent: "orange",
     popular: true,
@@ -32,7 +32,7 @@ const plans = [
   {
     name: "Enterprise",
     subtitle: "For large scale agencies",
-    price: "99",
+    price: "999",
     icon: Crown,
     accent: "blue",
     features: [

@@ -16,9 +16,9 @@ const plans = [
     ],
   },
   {
-    name: "Professional",
+    name: "Premium",
     subtitle: "For growing businesses",
-    price: "29",
+    price: "149",
     icon: Zap,
     accent: "blue",
     popular: true,
@@ -35,11 +35,11 @@ const plans = [
   {
     name: "Enterprise",
     subtitle: "For large organizations",
-    price: "99",
+    price: "499",
     icon: Crown,
     accent: "violet",
     features: [
-      "Everything in Professional",
+      "Everything in Premium",
       "Custom service SLAs",
       "Priority technician assignment (incl. Urgent)",
       "Lifetime warranty coverage",
